@@ -4,7 +4,6 @@ from posts.models import Group, Post
 from rest_framework import filters, permissions, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 
-from .exceptions import FollowUserNotExist, SelfFollow
 from .permissions import IsAuthor, IsAuthorOrReadOnlyPermission
 from .serializers import (
     CommentSerializer, FollowSerializer, GroupSerializer, PostSerializer,
@@ -47,7 +46,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, post=post)
 
 
-class FollowViewSet(viewsets.ModelViewSet): #QuerySerializerMixin
+class FollowViewSet(viewsets.ModelViewSet):
     serializer_class = FollowSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('$following__username',)
@@ -55,19 +54,11 @@ class FollowViewSet(viewsets.ModelViewSet): #QuerySerializerMixin
 
     def get_queryset(self):
         user = User.objects.get(username=self.request.user)
-        queryset = user.follower.all().values('user', 'following')
+        queryset = user.follower.all()
         return queryset
 
     def perform_create(self, serializer):
         user = self.request.user
-        following_username = self.kwargs.get("following")
-
-        try:
-            following = User.objects.get(username=following_username)
-        except User.DoesNotExist:
-            raise FollowUserNotExist()
-
-        if user == following_username:
-            raise SelfFollow()
-
+        following_username = self.request.data['following']
+        following = User.objects.get(username=following_username)
         serializer.save(user=user, following=following)
