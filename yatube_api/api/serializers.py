@@ -4,7 +4,6 @@ from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator, UniqueValidator
 
 from posts.models import Comment, Follow, Group, Post
-
 from .validators import UserFollowValidator
 
 User = get_user_model()
